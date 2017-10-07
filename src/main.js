@@ -5,12 +5,13 @@ import App from './App'
 import router from './router'
 import store from './store'
 import Vuetify from 'vuetify'
+import VueCodeMirror from 'vue-codemirror'
 
 Vue.config.productionTip = false
 
 Vue.use(Vuetify)
 
-import('../node_modules/vuetify/dist/vuetify.min.css')
+import('vuetify/dist/vuetify.min.css')
 
 /* eslint-disable no-new */
 new Vue({

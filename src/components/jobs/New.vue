@@ -1,111 +1,187 @@
 <template>
 	<div class="job">
-
-		<v-text-field
-				name="job"
-				label="Job Name"
-				single-line
-				required
-				/>
-
-		<v-select
-				label="Account"
-				:items="available.accounts"
-				v-model="job.account"
-				hint="Select the account to charge Job time to"
-				persistent-hint
-				/>
-
-		<v-container fluid grid-list-lg>
-            <v-layout row wrap>
-				<v-flex xs12 sm4 md4 lg3 v-for="partition in available.partitions" :key="partition.id">
-					<v-card :class="{ 'selected-card' : partition.id == job.partition }" 
-							class="partition-card" 
-							@click="setSelectedPartition(partition.id)"
-							>
-						<v-card-title primary-title >
-								<v-icon v-if="partition.id == job.partition" class="green--text">fa-check-circle-o</v-icon>
-								<v-icon v-else>fa-circle-o</v-icon>
-								<h5 class="pa-0 ma-0 ml-4">{{partition.name}}</h5>
-						</v-card-title>
-						<div class="px-3 py-1">
-							<div>
-								{{partition.cpuCount}} CPUs
-								<div v-tooltip:top="{ html: `${100 -partition.cpuUsage}% Free` }">
-									<v-progress-linear height="10" :value="partition.cpuUsage"  error />	
-								</div>
-							</div>
-							<div>						
-								{{partition.memCount}}GB Memory
-								<div v-tooltip:top="{ html: `${100 - getUsagePercent(partition.memCount, partition.memUsage)}% Free` }">
-									<v-progress-linear height="10" 
-													   :value="getUsagePercent(partition.memCount, partition.memUsage)"  
-													   error
-													   />
-								</div>
-							</div>
+		<h4 class="page-title" elevation-5>New Job</h4>
+		<form>
+			<v-container grid-list-xl fluid>
+				<v-layout row wrap>
+			    	<v-flex xs12 sm6>
+						<v-text-field
+								label="Job Name"
+								hint="A unique name to identify this job"
+								single-line
+								required
+								/>
+					</v-flex>
+					<v-flex xs12 sm6>
+						<v-select
+						label="Account"
+						:items="available.accounts"
+						v-model="job.account"
+						hint="Select the account to charge Job time to"
+						persistent-hint
+						required
+						/>
+					</v-flex>
+				</v-layout>				
+				<v-layout row wrap>
+					<v-flex xs12 sm6>
+						<v-text-field
+								type="email"
+								label="Email Address"
+								hint="Recieve an email when job completes (optional)"
+								single-line
+								/>
+					</v-flex>
+				</v-layout>
+				<v-layout row wrap>
+					<v-flex xs12>
+						<h5 class="form-title">Partitions</h5>
+						<p>Select a partition from the list below</p>
+						<v-container fluid grid-list-xs>
+				            <v-layout row wrap>
+								<v-flex xs12 sm4 md4 lg3 v-for="partition in available.partitions" :key="partition.id">
+									<v-card :class="{ 'selected-card' : partition.id == job.partition }" 
+											class="partition-card" 
+											@click="setSelectedPartition(partition.id)"
+											>
+										<v-card-title primary-title >
+												<v-icon v-if="partition.id == job.partition" class="green--text">fa-check-circle-o</v-icon>
+												<v-icon v-else>fa-circle-o</v-icon>
+												<h5 class="pa-0 ma-0 ml-4">{{partition.name}}</h5>
+										</v-card-title>
+										<div class="px-3 py-1">
+											<div>
+												{{partition.cpuCount}} CPUs
+												<div v-tooltip:top="{ html: `${100 -partition.cpuUsage}% Free` }">
+													<v-progress-linear height="10" :value="partition.cpuUsage"  error />	
+												</div>
+											</div>
+											<div>						
+												{{partition.memCount}}GB Memory
+												<div v-tooltip:top="{ html: `${100 - getUsagePercent(partition.memCount, partition.memUsage)}% Free` }">
+													<v-progress-linear height="10" 
+																	   :value="getUsagePercent(partition.memCount, partition.memUsage)"  
+																	   error
+																	   />
+												</div>
+											</div>
+										</div>
+									</v-card>
+								</v-flex>
+							</v-layout>
+						</v-container>
+					</v-flex>
+				</v-layout>
+				 <v-layout row wrap>
+				 	<v-flex xs12 sm6>
+				 		<v-switch label="Advanced Settings" 
+				 				  v-model="advancedSettings"
+				 				  hint="Toggle for parallelization parameters"
+				 				  :color="advancedSettings ? 'white' : ''"
+				 				  persistent-hint
+				 				  />
+				 	</v-flex>
+				 </v-layout>
+				 <!-- lewis general biocompute GPU   | get node usage of lewis -->
+				 <v-layout row wrap v-show="!advancedSettings">
+				 	<p>To run a multithreaded job on 1 node, use --cpus-per-task/-c #, where # is the number of cores you want. Make sure that you set your program's parallel option to the same value.</p>
+					<v-flex xs12 sm6>
+						<div class="pa-2">
+							<v-text-field
+								type="number"
+								label="CPU / Cores"
+								value="1"
+								hint="Number of cores to run on each node"
+								required
+								/>
 						</div>
-					</v-card>
-				</v-flex>
-			</v-layout>
-		</v-container>
-		 <!-- lewis general biocompute GPU   | get node usage of lewis -->
-
-		<v-text-field
-				type="number"
-				label="Nodes"
-				value="1"
-				hint="Number of nodes (machines) this job will run on"
-				persistent-hint
-				required
-				/>
-
-		<v-text-field
-				type="number"
-				label="Tasks per Node"
-				value="1"
-				hint="Number of Tasks per Node"
-				persistent-hint
-				required
-				/>
-
-		<v-text-field
-				type="number"
-				label="CPU"
-				value="1"
-				hint="Number of cores to run on each node"
-				persistent-hint
-				required
-				/>
-
-		<v-text-field
-				type="number"
-				label="Memory"
-				value="2"
-				suffix="GB"
-				hint="Memory (in Gigabytes) to accocate to your job"
-				persistent-hint
-				required
-				/>
-
-		<v-select
-				label="Modules to Load"
-				:items="available.modules"
-				v-model="job.modules"
-				autocomplete
-				multiple
-				chips
-				hint="Select the modules (software dependancies) needed to run your job"
-				persistent-hint
-				/>
+						<div class="pa-2">
+							<v-text-field
+								type="number"
+								label="Memory / RAM"
+								value="2"
+								suffix="GB"
+								hint="Memory (in Gigabytes) to accocate to your job"
+								required
+								/>
+						</div>
+					</v-flex>
+				</v-layout>
+				<v-layout row wrap v-show="advancedSettings">
+					<p>Do not use the slurm option --ntasks/-n to ask for multiple cpus except for MPI programs. Other than MPI, there are almost no cases where this does what you want.
+					Programs that are either sequential, using only one cpu, or multi-threaded, using multiple cpus, can only run on a single node. Allocating cpus on multiple nodes will not speed up programs that can't make use of them. Unless you know that your program has been architected to use multiple nodes (e.g. MPI), don't allocate multiple nodes.</p>
+				 	<v-flex xs12 sm6>
+					 	<div class="pa-2">
+							<v-text-field
+								type="number"
+								label="Nodes"
+								value="1"
+								hint="Number of nodes (machines) this job will run on"
+								required
+								/>
+						</div>
+						<div class="pa-2">
+							<v-text-field
+								type="number"
+								label="Tasks per Node"
+								value="1"
+								hint="Number of Tasks per Node"
+								required
+								/>
+						</div>
+					</v-flex>
+					<v-flex xs12>
+						<v-select
+								label="Modules to Load"
+								:items="available.modules"
+								v-model="job.modules"
+								autocomplete
+								multiple
+								chips
+								hint="Select the modules (software dependancies) needed to run your job"
+								persistent-hint
+								clearable
+								/>
+					</v-flex>
+				</v-layout>
+				<v-layout row wrap>
+					<v-flex xs12 md8>
+						<p>Enter commands to run. Existing scripts can be coppied or dropped into the box below.</p>
+					</v-flex>
+					<v-flex xs12 md4>
+						<v-select label="Markup Editor"
+								  :items="editorLang"
+								  v-model="editorOptions.keyMap"
+								  />
+					</v-flex>
+				</v-layout>
+				<v-layout row wrap>
+					<v-flex xs12>
+						<codemirror v-model="job.code" :options="editorOptions" />
+					</v-flex>
+				</v-layout>
+			</v-container>
+		</form>
 	</div>
 </template>
 
 
 <script>
+import { codemirror, CodeMirror } from 'vue-codemirror'
+require('codemirror/keymap/sublime.js')
+require('codemirror/keymap/vim.js')
+require('codemirror/keymap/emacs.js')
+require('codemirror/addon/edit/matchbrackets.js')
+require('codemirror/addon/dialog/dialog.js')
+import('codemirror/addon/dialog/dialog.css')
+
 export default {
   
   name: 'new-job',
+
+  components: {
+    codemirror
+  },
 
   data () {
 	return {
@@ -446,8 +522,31 @@ export default {
 		job: {
 			account: '',
 			modules: [],
-			partition: 'lewis'
+			partition: 'lewis',
+			code: '',
+			email: false,
+			emailAddr: '',
+		},
+
+		advancedSettings: false,
+
+		editorLang: ['sublime', 'vim', 'emacs'],
+
+		editorOptions: {
+			tabSize: 4,
+			mode: 'application/x-sh',
+			theme: 'base16-dark',
+			lineNumbers: true,
+			line: true,
+			showCursorWhenSelecting: true,
+			keyMap: "sublime",
+			foldGutter: true,
+			gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+			styleSelectedText: true,
+			highlightSelectionMatches: { showToken: /\w/, annotateScrollbar: true },
+			matchBrackets: true,
 		}
+
 	}
   },
 
@@ -463,7 +562,15 @@ export default {
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style>
+
+	h4.page-title {
+		text-align: right;
+		font-style: italic;
+		font-size: 3.5em;
+		color: gray;
+	}
+
 	.partition-card {
 		border: 2px solid rgba(0,0,0, 0);
 		cursor: pointer;
@@ -471,5 +578,14 @@ export default {
 
 	.selected-card {
 		border: 2px solid rgba(76, 175, 80, 1);
+	}
+
+	fieldset {
+		border: 1px solid #35689a;
+		border-radius: 20px;
+	}
+
+	div.input-group__messages div.input-group__hint{
+		color: lightslategray;
 	}
 </style>
