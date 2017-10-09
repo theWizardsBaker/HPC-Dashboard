@@ -7,7 +7,7 @@
       </v-btn>
     </v-toolbar>
     <main>
-      <v-container fluid >
+      <v-container fluid>
         <v-flex xs12>
           <router-view></router-view>
         </v-flex>

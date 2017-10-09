@@ -1,6 +1,6 @@
 <template>
 	<div class="job">
-		<h4 class="page-title" elevation-5>New Job</h4>
+		<h2>New Job</h2>
 		<form>
 			<v-container grid-list-xl fluid>
 				<v-layout row wrap>
@@ -30,6 +30,19 @@
 								label="Email Address"
 								hint="Recieve an email when job completes (optional)"
 								single-line
+								/>
+					</v-flex>
+					<v-flex xs12 sm6>
+						<v-select
+								label="Email Events"
+								:items="available.emailEvents"
+								v-model="job.emailEvents"
+								autocomplete
+								multiple
+								chips
+								hint="Select which events will generate an email"
+								persistent-hint
+								clearable
 								/>
 					</v-flex>
 				</v-layout>
@@ -84,7 +97,60 @@
 				 </v-layout>
 				 <!-- lewis general biocompute GPU   | get node usage of lewis -->
 				 <v-layout row wrap v-show="!advancedSettings">
-				 	<p>To run a multithreaded job on 1 node, use --cpus-per-task/-c #, where # is the number of cores you want. Make sure that you set your program's parallel option to the same value.</p>
+				 	<v-alert info value="true">
+				 		To run a multithreaded job on a single node, specify below the number of cores you want to allocate. Make sure that you set your program's parallel option to the same value.
+				 	</v-alert>
+					<v-flex xs12 sm6>
+						<div class="pa-2">
+							<v-text-field
+								type="number"
+								label="CPU / Cores"
+								value="1"
+								hint="Number of cores to run on each node"
+								required
+								/>
+						</div>
+					</v-flex>
+					<v-flex xs12 sm6>
+						<div class="pa-2">
+							<v-text-field
+								type="number"
+								label="Memory / RAM"
+								value="2"
+								suffix="GB"
+								hint="Memory (in Gigabytes) to accocate to your job"
+								required
+								/>
+						</div>
+					</v-flex>
+				</v-layout>
+				<v-layout row wrap v-show="advancedSettings">
+					<v-alert error value="true">
+						Do not use tasks to ask for multiple cpus except for MPI programs. Other than MPI, there are almost no cases where this does what you want.
+					</v-alert>
+					<v-alert info value="true" class="my-3">
+						Programs that are either sequential, using only one cpu, or multi-threaded, using multiple cpus, can only run on a single node. Allocating cpus on multiple nodes will not speed up programs that can't make use of them. Unless you know that your program has been architected to use multiple nodes (e.g. MPI), don't allocate multiple nodes.
+					</v-alert>
+				 	<v-flex xs12 sm6>
+					 	<div class="pa-2">
+							<v-text-field
+								type="number"
+								label="Nodes"
+								value="1"
+								hint="Number of nodes (machines) this job will run on"
+								required
+								/>
+						</div>
+						<div class="pa-2">
+							<v-text-field
+								type="number"
+								label="Tasks per Node"
+								value="1"
+								hint="Number of Tasks per Node"
+								required
+								/>
+						</div>
+					</v-flex>
 					<v-flex xs12 sm6>
 						<div class="pa-2">
 							<v-text-field
@@ -107,29 +173,7 @@
 						</div>
 					</v-flex>
 				</v-layout>
-				<v-layout row wrap v-show="advancedSettings">
-					<p>Do not use the slurm option --ntasks/-n to ask for multiple cpus except for MPI programs. Other than MPI, there are almost no cases where this does what you want.
-					Programs that are either sequential, using only one cpu, or multi-threaded, using multiple cpus, can only run on a single node. Allocating cpus on multiple nodes will not speed up programs that can't make use of them. Unless you know that your program has been architected to use multiple nodes (e.g. MPI), don't allocate multiple nodes.</p>
-				 	<v-flex xs12 sm6>
-					 	<div class="pa-2">
-							<v-text-field
-								type="number"
-								label="Nodes"
-								value="1"
-								hint="Number of nodes (machines) this job will run on"
-								required
-								/>
-						</div>
-						<div class="pa-2">
-							<v-text-field
-								type="number"
-								label="Tasks per Node"
-								value="1"
-								hint="Number of Tasks per Node"
-								required
-								/>
-						</div>
-					</v-flex>
+				<v-layout row wrap>
 					<v-flex xs12>
 						<v-select
 								label="Modules to Load"
@@ -143,10 +187,8 @@
 								clearable
 								/>
 					</v-flex>
-				</v-layout>
-				<v-layout row wrap>
 					<v-flex xs12 md8>
-						<p>Enter commands to run. Existing scripts can be coppied or dropped into the box below.</p>
+						<p>Enter commands to run. Existing scripts can be coppied or drag-and-dropped into the box below.</p>
 					</v-flex>
 					<v-flex xs12 md4>
 						<v-select label="Markup Editor"
@@ -517,6 +559,8 @@ export default {
 
 			],
 
+			emailEvents: ['NONE', 'BEGIN', 'END', 'FAIL', 'REQUEUE', 'TIME_LIMIT', 'ALL']
+
 		},
 
 		job: {
@@ -526,6 +570,7 @@ export default {
 			code: '',
 			email: false,
 			emailAddr: '',
+			emailEvents: '',
 		},
 
 		advancedSettings: false,
@@ -567,8 +612,9 @@ export default {
 	h4.page-title {
 		text-align: right;
 		font-style: italic;
-		font-size: 3.5em;
+		font-size: 2em;
 		color: gray;
+		padding-bottom: 10px;
 	}
 
 	.partition-card {

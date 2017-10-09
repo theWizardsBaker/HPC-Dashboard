@@ -4,7 +4,6 @@
 						 persistent
 						 height="100%"
 						 clipped
-						 absolute
 						 enable-resize-watcher
 						 >
 		<v-list dense>
@@ -81,7 +80,7 @@
 							{
 								title: 'Available',
 								icon: 'fa-folder-open-o',
-								path: 'list'
+								path: 'modules'
 							},
 							{
 								title: 'Request Module',
