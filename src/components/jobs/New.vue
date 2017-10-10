@@ -58,10 +58,13 @@
 											@click="setSelectedPartition(partition.id)"
 											>
 										<v-card-title primary-title >
-												<v-icon v-if="partition.id == job.partition" class="green--text">fa-check-circle-o</v-icon>
-												<v-icon v-else>fa-circle-o</v-icon>
-												<h5 class="pa-0 ma-0 ml-4">{{partition.name}}</h5>
+											<v-icon v-if="partition.id == job.partition" class="green--text">fa-check-circle-o</v-icon>
+											<v-icon v-else>fa-circle-o</v-icon>
+											<h5 class="pa-0 ma-0 ml-4">{{partition.name}}</h5>
 										</v-card-title>
+										<div class="px-3 py-1">
+											<p class="text-xs-center">Max Run Time: 2 days</p>
+										</div>
 										<div class="px-3 py-1">
 											<div>
 												{{partition.cpuCount}} CPUs
@@ -559,7 +562,7 @@ export default {
 
 			],
 
-			emailEvents: ['NONE', 'BEGIN', 'END', 'FAIL', 'REQUEUE', 'TIME_LIMIT', 'ALL']
+			emailEvents: ['BEGIN', 'END', 'FAIL', 'REQUEUE', 'TIME_LIMIT']
 
 		},
 

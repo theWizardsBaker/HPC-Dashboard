@@ -21,8 +21,8 @@
 						/>
 
 				<v-text-field
-						label="Group"
-						hint="The user group you belong to"
+						label="Cluster"
+						hint="The cluster to install to"
 						single-line
 						required
 						/>
