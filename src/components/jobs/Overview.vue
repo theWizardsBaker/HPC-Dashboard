@@ -1,11 +1,40 @@
 <template>
 	<div class="jobs">
+		
 		<h2>Overview</h2>
-		<div>
-			<v-btn class="green" :to="'newjob'" dark> 
+
+		<v-layout row>
+
+  			<v-btn class="green" @click.stop="newJob" dark> 
 				<v-icon dark left>fa-plus</v-icon> New Job
 			</v-btn>
-		</div>
+
+			<v-dialog v-model="showJobDialog" 
+					  :lazy="true" 
+					  fullscreen 
+					  transition="dialog-bottom-transition" 
+					  :hide-overlay="true" 
+					  :overlay="false">
+				<v-card>
+					<v-toolbar>
+						<v-btn @click.native="closeJob()" icon dark>
+							<v-icon>close</v-icon>
+						</v-btn>
+						<v-toolbar-title>
+							<span v-if="currentRoute === 'newjob'">
+								New Job
+							</span>
+							<span v-else>
+								Job {{selectedJob}} Info
+							</span>
+
+						</v-toolbar-title>
+					</v-toolbar>
+					<router-view></router-view>
+				</v-card>
+			</v-dialog>
+		</v-layout>
+
 		<v-card class="mb-0">
 			<v-card-title class="my-1">
 				<v-layout row>
@@ -23,43 +52,68 @@
 					</v-flex>
 				</v-layout>
 			</v-card-title>
-			<v-data-table   
+			<v-data-table	
 				:headers="data.headers"
 				:items="data.rows"
 				:search="search"
 				class="elevation-1"
 				>
-			<template slot="items" scope="props">
-				<tr :active="props.selected" @click="props.selected = !props.selected">
-					<td class="text-xs-right">
-						{{ props.item.job }}
-					</td>
-					<td class="text-xs-right">{{ props.item.name }}</td>
-					<td class="text-xs-right">{{ props.item.group }}</td>
-					<td class="text-xs-right">{{ props.item.partition }}</td>
-					<td class="text-xs-right" :class="statusColor(props.item.state)">{{ props.item.state }}</td>
-					<td class="text-xs-right">{{ props.item.reason }}</td>
-					<td class="text-xs-right">{{ props.item.maxcpus }}</td>
-					<td class="text-xs-right">{{ props.item.maxram }}</td>
-					<td class="text-xs-right">{{ props.item.submitted }}</td>
-					<td class="text-xs-right">{{ props.item.start }}</td>
-					<td class="text-xs-right">{{ props.item.elapsed }}</td>
-				</tr>
-			</template>
+				<template slot="items" scope="props">
+					<!-- <tr :active="props.selected" @click="props.selected = !props.selected"> -->
+					<tr>
+						<td class="text-xs-right">
+							<v-btn flat small primary class="job-link white--text" @click.stop="showJob(props.index)">
+								{{ props.item.job }}
+							</v-btn>
+						</td>
+						<td class="text-xs-right">{{ props.item.name }}</td>
+						<td class="text-xs-right">{{ props.item.group }}</td>
+						<td class="text-xs-right">{{ props.item.partition }}</td>
+						<td class="text-xs-right" :class="statusColor(props.item.state)">{{ props.item.state }}</td>
+						<td class="text-xs-right">{{ props.item.reason }}</td>
+						<td class="text-xs-right">{{ props.item.maxcpus }}</td>
+						<td class="text-xs-right">{{ props.item.maxram }}</td>
+						<td class="text-xs-right">{{ props.item.submitted }}</td>
+						<td class="text-xs-right">{{ props.item.start }}</td>
+						<td class="text-xs-right">{{ props.item.elapsed }}</td>
+					</tr>
+				</template>
 			</v-data-table>
 		</v-card>
 	</div>
 </template>
 
 <script>
+	import JobDialog from '@/components/dialogs/Job'
+
 	export default {
+
 		name: 'jobs-overview',
-		data () {
+
+		components: {
+			jobDialog: JobDialog
+		},
+
+		updated() {
+			if(this.currentRoute === 'detailjob'){
+				this.showJob(this.$route.params.id)
+			}
+			if(this.currentRoute === 'newjob'){
+				this.newJob()
+			}
+		},
+
+		data() {
 			return {
 				
 				search: '',
 
+				showJobDialog: false,
+
+				selectedJob: 0,
+
 				data: {
+
 					headers: [
 						{ text: 'Job Id', value: 'job' },
 						{ text: 'Name', value: 'name' },
@@ -77,7 +131,7 @@
 					rows: [
 
 						{
-							job: '3002538',
+							job: '3002530',
 							name: 'Job 1',
 							group: 'elsiklab',
 							partition: 'Lewis',
@@ -133,6 +187,15 @@
 				}
 			}
 		},
+
+		computed: {
+
+			currentRoute() {
+				return this.$route.name
+			}
+
+		},
+
 		methods: {
 			statusColor(status){
 				switch(status.toLocaleLowerCase()){
@@ -145,6 +208,23 @@
 					case "cancelled":
 						return 'grey--text'; break;
 				}
+			},
+
+			newJob(){
+				this.showJobDialog = true
+				this.$router.push({ name: 'newjob' })
+			},
+
+
+			showJob(job){
+				this.showJobDialog = true
+				this.selectedJob = job
+				this.$router.push({ name: 'detailjob', params: { id: job } })
+			},
+
+			closeJob(){
+				this.showJobDialog = false
+				this.$router.push({ name: 'jobs' })
 			}
 		}
 	}
@@ -154,5 +234,9 @@
 <style scoped>
 	.table__overflow {
 		border-top: 1px solid rgb(128, 128, 128);
+	}
+	.job-link {
+		text-decoration: underline;
+		color: white;
 	}
 </style>

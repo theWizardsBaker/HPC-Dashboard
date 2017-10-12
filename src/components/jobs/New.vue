@@ -1,6 +1,6 @@
 <template>
 	<div class="job">
-		<h2>New Job</h2>
+		<!-- <h2>New Job</h2> -->
 		<form>
 			<v-container grid-list-xl fluid>
 				<v-layout row wrap>

@@ -1,10 +1,11 @@
 <template>
 	<v-navigation-drawer v-model="showDrawer"
 						 class="pb-0"
-						 persistent
 						 height="100%"
+						 persistent
 						 clipped
-						 enable-resize-watcher
+						 disable-route-watcher
+						 floating
 						 >
 		<v-list dense>
 			<v-list-group v-for="route in routes" :key="route.location">
@@ -25,14 +26,17 @@
 						</v-icon>
 					</v-list-tile-action>
 				</v-list-tile>
-				<v-list-tile v-for="subroute in route.subroutes" :key="subroute.path" @click="navigateTo(subroute.path)">
+				<v-list-tile v-for="subroute in route.subroutes" 
+							 :key="subroute.path" 
+							 :to="{ name: subroute.path }"
+							 >
 					<v-list-tile-action>
 						<v-icon>
 							{{subroute.icon}}
 						</v-icon>
 					</v-list-tile-action>
 					<v-list-tile-content>
-						<v-list-tile-title>
+						<v-list-tile-title class="white--text">
 							{{subroute.title}}
 						</v-list-tile-title>
 					</v-list-tile-content>

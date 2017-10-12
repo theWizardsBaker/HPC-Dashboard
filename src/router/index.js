@@ -5,6 +5,7 @@ import Dashboard from '@/components/Dashboard'
 import JobMetrics from '@/components/jobs/Metrics'
 import JobOverview from '@/components/jobs/Overview'
 import NewJob from '@/components/jobs/New'
+import JobDetails from '@/components/jobs/Details'
 import ModuleList from '@/components/modules/List'
 import ModuleRequest from '@/components/modules/Request'
 
@@ -20,17 +21,26 @@ export default new Router({
     {
       path: '/jobs',
       name: 'jobs',
-      component: JobOverview
+      component: JobOverview,
+      children: [
+        {
+          path: 'new',
+          name: 'newjob',
+          component: NewJob,
+          props: true,
+        },
+        {
+          path: ':id',
+          name: 'detailjob',
+          component: JobDetails,
+          props: true,
+        },
+      ]
     },
     {
       path: '/metrics',
       name: 'metrics',
       component: JobMetrics
-    },
-    {
-      path: '/newjob',
-      name: 'newjob',
-      component: NewJob
     },
     {
       path: '/modules',
