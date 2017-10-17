@@ -8,7 +8,6 @@
 						<v-text-field
 								label="Job Name"
 								hint="A unique name to identify this job"
-								single-line
 								required
 								/>
 					</v-flex>
@@ -29,7 +28,6 @@
 								type="email"
 								label="Email Address"
 								hint="Recieve an email when job completes (optional)"
-								single-line
 								/>
 					</v-flex>
 					<v-flex xs12 sm6>
@@ -103,28 +101,31 @@
 				 	<v-alert info value="true">
 				 		To run a multithreaded job on a single node, specify below the number of cores you want to allocate. Make sure that you set your program's parallel option to the same value.
 				 	</v-alert>
-					<v-flex xs12 sm6>
-						<div class="pa-2">
+					<v-flex xs12 sm4 class="pa-2">
 							<v-text-field
 								type="number"
 								label="CPU / Cores"
-								value="1"
 								hint="Number of cores to run on each node"
 								required
 								/>
-						</div>
 					</v-flex>
-					<v-flex xs12 sm6>
-						<div class="pa-2">
+					<v-flex xs12 sm4 class="pa-2">
 							<v-text-field
 								type="number"
 								label="Memory / RAM"
-								value="2"
 								suffix="GB"
 								hint="Memory (in Gigabytes) to accocate to your job"
 								required
 								/>
-						</div>
+					</v-flex>
+					<v-flex xs12 sm4 class="pa-2">
+							<v-text-field
+								type="text"
+								label="Run Time"
+								value="0-00:10:00"
+								hint="How long your job will run. Format: Days - Hours : Minutes : Seconds "
+								required
+								/>
 					</v-flex>
 				</v-layout>
 				<v-layout row wrap v-show="advancedSettings">
@@ -149,7 +150,16 @@
 								type="number"
 								label="Tasks per Node"
 								value="1"
-								hint="Number of Tasks per Node"
+								hint="The number of instance your command is executed"
+								required
+								/>
+						</div>
+						<div class="pa-2">
+							<v-text-field
+								type="number"
+								label="CPUs per Task"
+								value="1"
+								hint="Number of CPUs for each Task"
 								required
 								/>
 						</div>
@@ -171,6 +181,15 @@
 								value="2"
 								suffix="GB"
 								hint="Memory (in Gigabytes) to accocate to your job"
+								required
+								/>
+						</div>
+						<div class="pa-2">
+							<v-text-field
+								type="text"
+								label="Run Time"
+								value="0-00:10:00"
+								hint="How long your job will run. Format: Days - Hours : Minutes : Seconds "
 								required
 								/>
 						</div>
@@ -206,6 +225,9 @@
 					</v-flex>
 				</v-layout>
 			</v-container>
+			<v-layout>
+				<v-btn light disabled>Submit Job</v-btn>
+			</v-layout>
 		</form>
 	</div>
 </template>

@@ -46,9 +46,6 @@
 	</v-navigation-drawer>
 </template>
 
-</template>
-
-
 <script>
 	export default {
 
