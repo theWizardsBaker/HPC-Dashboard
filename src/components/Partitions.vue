@@ -11,12 +11,14 @@
 						<v-icon v-else>fa-circle-o</v-icon>
 						<h5 class="pa-0 ma-0 ml-4">{{partition.name}}</h5>
 					</v-card-title>
-					<div class="px-3 py-1">
-						<p class="text-xs-center">Total Nodes: {{partition.nodes}}</p>
-					</div>
-					<div class="px-3 py-1">
-						<p class="text-xs-center">Max Run Time: {{formatTime(partition.time_limit)}}</p>
-					</div>
+					<v-container fluid>
+						<v-layout row class="px-3 py-1">
+							<p class="text-xs-center">Total Nodes: {{partition.nodes}}</p>
+						</v-layout>
+						<v-layout row class="px-3 py-1">
+							<p class="text-xs-center">Max Run Time: {{formatTime(partition.time_limit)}}</p>
+						</v-layout>
+					</v-container>
 					<div class="px-3 py-1">
 						<div>
 							{{partition.cpus}} CPUs

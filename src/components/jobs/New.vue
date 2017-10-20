@@ -26,7 +26,7 @@
 						<v-text-field type="email"
 									  label="Email Address"
 									  hint="Recieve an email when job completes (optional)"
-									  v-model="job.email"
+									  v-model="job.emailAddr"
 									  />
 					</v-flex>
 					<v-flex xs12 sm6>
@@ -70,6 +70,7 @@
 					</v-alert>
 					<v-flex xs12 sm4 class="pa-2">
 							<v-text-field
+								v-model="job.cpus"
 								type="number"
 								label="CPU / Cores"
 								hint="Number of cores to run on each node"
@@ -78,6 +79,7 @@
 					</v-flex>
 					<v-flex xs12 sm4 class="pa-2">
 							<v-text-field
+								v-model="job.memory"
 								type="number"
 								label="Memory / RAM"
 								suffix="GB"
@@ -86,30 +88,29 @@
 								/>
 					</v-flex>
 					<v-flex xs12 sm4 class="pa-2">
-						<v-layout>
-							<v-flex xs4 md3>
-								Estimated Run Time
-							</v-flex>
+						<v-layout row>
 							<v-flex xs4 md3>
 								<v-text-field type="number"
 											  label="Days"
-											  value="0"
 											  required
+											  v-model="job.runtime[0]"
+											  hint="Estimated Run Time"
 											  />
 							</v-flex>
 							<v-flex xs4 md3>
 								<v-text-field type="number"
 											  label="Hours"
-											  value="2"
 											  required
+											  v-model="job.runtime[1]"
+											  hint="Estimated Run Time"
 											  />
 							</v-flex>
 							<v-flex xs4 md3>
 								<v-text-field type="number"
 											  label="Minutes"
-											  value="0"
-											  max="60"
 											  required
+											  v-model="job.runtime[2]"
+											  hint="Estimated Run Time"
 											  />
 							</v-flex>
 						</v-layout>
@@ -127,7 +128,7 @@
 							<v-text-field
 								type="number"
 								label="Nodes"
-								value="1"
+								v-model="job.nodes"
 								hint="Number of nodes (machines) this job will run on"
 								required
 								/>
@@ -136,7 +137,7 @@
 							<v-text-field
 								type="number"
 								label="Tasks per Node"
-								value="1"
+								v-model="job.tasks"
 								hint="The number of instance your command is executed"
 								required
 								/>
@@ -145,7 +146,7 @@
 							<v-text-field
 								type="number"
 								label="CPUs per Task"
-								value="1"
+								v-model="job.tasksPerCpu"
 								hint="Number of CPUs for each Task"
 								required
 								/>
@@ -156,7 +157,7 @@
 							<v-text-field
 								type="number"
 								label="CPU / Cores"
-								value="1"
+								v-model="job.cpus"
 								hint="Number of cores to run on each node"
 								required
 								/>
@@ -165,7 +166,7 @@
 							<v-text-field
 								type="number"
 								label="Memory / RAM"
-								value="2"
+								v-model="job.memory"
 								suffix="GB"
 								hint="Memory (in Gigabytes) to accocate to your job"
 								required
@@ -173,26 +174,28 @@
 						</div>
 						<div class="pa-2">
 							<v-layout>
-								<v-flex xs4 md3 offset-md1>
+								<v-flex xs4 md3 offset-md2>
 									<v-text-field type="number"
 												  label="Days"
-												  value="0"
 												  required
+												  v-model="job.runtime[0]"
+												  hint="Estimated Run Time"
 												  />
 								</v-flex>
 								<v-flex xs4 md3>
 									<v-text-field type="number"
 												  label="Hours"
-												  value="2"
 												  required
+												  v-model="job.runtime[1]"
+												  hint="Estimated Run Time"
 												  />
 								</v-flex>
 								<v-flex xs4 md3>
 									<v-text-field type="number"
 												  label="Minutes"
-												  value="0"
-												  max="60"
 												  required
+												  v-model="job.runtime[2]"
+												  hint="Estimated Run Time"
 												  />
 								</v-flex>
 							</v-layout>
@@ -206,29 +209,12 @@
 								hint="Select the modules (software dependancies) needed to run your job"
 								:items="available.modules"
 								v-model="job.modules"
-								:async-loading="module.loading"
-								:search-input.sync="module.query"
-								debounce-search="500"
 								autocomplete
-								cache-items
 								multiple
 								chips
 								persistent-hint
 								clearable
-								item-text="name"
-								item-value="val"
-								>
-							<template slot="item" scope="data">
-								<template  v-if="data.item.hasOwnProperty('header')">
-									<v-list-tile-content v-text="data.item.header" />
-								</template>
-								<template v-else>
-										<v-list-tile-content>
-						                    <v-list-tile-title v-text="data.item.name" />
-						                </v-list-tile-content>
-								</template>
-							</template>
-						</v-select>
+								/>
 					</v-flex>
 					<v-flex xs12 md8>
 						<p>Enter commands to run. Existing scripts can be coppied or drag-and-dropped into the box below.</p>
@@ -277,6 +263,16 @@ export default {
 	this.$http.get('api/partitions/all').then( response => {
 		this.available.partitions = response.data.partitions
 	})
+
+	this.$http.get('api/modules/all').then( response => {
+		response.data.modules.forEach( (mod, index) => {
+			if(index > 0) this.available.modules.push({ divider: true })
+			this.available.modules.push({ header: mod.name })
+			mod.versions.forEach( version => {
+				this.available.modules.push({ text: version, value: `${mod.name}/${version}` })
+			})
+		})
+	})
   },
 
   data () {
@@ -311,6 +307,9 @@ export default {
 			nodes: 1,
 			// ntasks
 			tasks: 1,
+			// task-per-cpu
+			tasksPerCpu: 1,
+			// 
 			advancedSettings: false,
 		},
 
@@ -357,9 +356,10 @@ export default {
 		this.$http.get(`api/modules/find/${searchFor}`).then( response => {
 			let modules = []
 			response.data.modules.forEach( mod => {
+				modules.push({ divider: true })
 				modules.push({ header: mod.name })
 				mod.versions.forEach( version => {
-					modules.push({ name: version, val: `${mod.name}/${version}` })
+					modules.push({ text: version, value: `${mod.name}/${version}` })
 				})
 			})
 			this.available.modules = modules
