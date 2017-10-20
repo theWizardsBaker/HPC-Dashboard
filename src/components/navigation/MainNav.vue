@@ -1,5 +1,5 @@
 <template>
-	<v-navigation-drawer v-model="showDrawer"
+	<v-navigation-drawer v-model="drawer"
 						 class="pb-0"
 						 height="100%"
 						 persistent
@@ -55,6 +55,7 @@
 
 		data() {
 			return {
+				drawer: this.showDrawer,
 				routes: [
 					{
 						title: 'Dashboard',
@@ -91,6 +92,15 @@
 						]
 					},
 				]
+			}
+		},
+
+		watch: {
+			showDrawer(val) {
+				this.drawer = val
+			},
+			drawer(val) {
+				this.$emit("drawer-action", val)
 			}
 		},
 

@@ -1,6 +1,6 @@
 <template>
   <v-app toolbar dark>
-    <main-nav :showDrawer="drawer" />
+    <main-nav :showDrawer="drawer" @drawer-action="setNavDrawer" />
     <v-toolbar dark fixed>
       <v-btn flat @click.stop="toggleNavDrawer">
         <v-icon left dark medium>fa-bars</v-icon> Menu
@@ -29,6 +29,9 @@ export default {
   methods: {
     toggleNavDrawer(){
       return this.drawer = !this.drawer
+    },
+    setNavDrawer(val){
+      this.drawer = val
     }
   }
 }

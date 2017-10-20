@@ -12,8 +12,6 @@ import VueAxios from 'vue-axios'
 Vue.config.productionTip = false
 
 const API_BASE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3000/' : [window.location.protocol, '//', window.location.host].join('')
-// axios.defaults.headers.common['Content-Type'] = 'application/json'
-// axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*'
 
 Vue.use(Vuetify)
 Vue.use(VueAxios, axios.create({
