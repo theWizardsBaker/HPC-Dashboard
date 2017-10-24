@@ -14,9 +14,12 @@
 					<v-flex xs12 sm6>
 						<v-select label="Account"
 								  :items="available.accounts"
+								  item-text="name"
+								  item-value="name"
 								  v-model="job.account"
 								  hint="Select the account to charge Job time to"
 								  persistent-hint
+								  autocomplete
 								  required
 								  />
 					</v-flex>
@@ -89,7 +92,7 @@
 					</v-flex>
 					<v-flex xs12 sm4 class="pa-2">
 						<v-layout row>
-							<v-flex xs4 md3>
+							<v-flex xs4 md3 offset-md2>
 								<v-text-field type="number"
 											  label="Days"
 											  required
@@ -165,10 +168,10 @@
 						<div class="pa-2">
 							<v-text-field
 								type="number"
-								label="Memory / RAM"
+								label="Memory / RAM Per CPU"
 								v-model="job.memory"
 								suffix="GB"
-								hint="Memory (in Gigabytes) to accocate to your job"
+								hint="Memory (in Gigabytes) to accocate to each CPU"
 								required
 								/>
 						</div>
@@ -232,8 +235,12 @@
 					</v-flex>
 				</v-layout>
 			</v-container>
-			<v-layout>
-				<v-btn light disabled>Submit Job</v-btn>
+			<v-layout row wrap>
+				<v-flex>
+					<p class="text-xs-center">
+						<v-btn light :disabled="!validForm">Submit Job</v-btn>
+					</p>
+				</v-flex>
 			</v-layout>
 		</form>
 	</div>
@@ -260,6 +267,10 @@ export default {
   },
 
   created() {
+	this.$http.get('api/groups/all').then( response => {
+		this.available.accounts = response.data.groups
+	})
+
 	this.$http.get('api/partitions/all').then( response => {
 		this.available.partitions = response.data.partitions
 	})
@@ -280,7 +291,7 @@ export default {
 
 		available: {
 			partitions: [],
-			accounts: [ 'General', 'elsiklab', 'spencer' ],
+			accounts: [],
 			modules: [],
 			emailEvents: ['BEGIN', 'END', 'FAIL', 'REQUEUE', 'TIME_LIMIT']
 		},
@@ -302,7 +313,7 @@ export default {
 			// mem / mem-per-cpu
 			memory: 2,
 			// time
-			runtime: ['0', '0', '0'],
+			runtime: ['0', '2', '0'],
 			// nodes
 			nodes: 1,
 			// ntasks
@@ -338,34 +349,36 @@ export default {
 	}
   },
 
-  watch: {
-	'module.query'(val){
-		this.getModules(val)
-	}
+  computed: {
+
+  	validTime(){
+  		return 0 < this.job.runtime.reduce((sum, value) => { return sum + value })
+  	},
+
+  	validForm(){
+  		// filter all the string values
+  		let req_strings = ['name', 'account', 'partition', 'code'].reduce((prev, val) => prev && !!this.job[val].trim() , true)
+  		// filter all the integer values
+		let req_ints = ['cpus', 'memory']
+  		if(this.job.advancedSettings) req_ints.concat(['nodes', 'tasks', 'cpus-per-task'])
+  		// 
+  		req_ints = req_ints.reduce((prev, cur) => { return prev && (this.job[cur] > 0)}, true)
+
+  		return req_strings && req_ints && this.validTime
+  	},
+
   },
 
   methods: {
+
 	setSelectedPartition(partition){
 		this.job.partition = partition
 	},
+
 	getUsagePercent(total, used){
 		return parseInt((used / total) * 100)
 	},
-	getModules(searchFor){
-		if(!searchFor) return ""
-		this.$http.get(`api/modules/find/${searchFor}`).then( response => {
-			let modules = []
-			response.data.modules.forEach( mod => {
-				modules.push({ divider: true })
-				modules.push({ header: mod.name })
-				mod.versions.forEach( version => {
-					modules.push({ text: version, value: `${mod.name}/${version}` })
-				})
-			})
-			this.available.modules = modules
-			// this.available.modules = response.data.modules
-		})
-	},
+
   }
 }
 </script>
