@@ -2,6 +2,18 @@
 
 require 'mongo'
 
+# arg 0 = ip
+# arg 1 = dbname
+=begin
+{ 
+  user: "HPCUser",
+  pwd: "65201",
+  roles: [
+    { role: "readWrite", db: "hpc" }
+  ]
+}
+=end
+
 association_list = []
 # mongo log level
 # Mongo::Logger.logger.level = ::Logger::FATAL

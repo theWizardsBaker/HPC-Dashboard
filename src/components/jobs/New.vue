@@ -29,7 +29,7 @@
 						<v-text-field type="email"
 									  label="Email Address"
 									  hint="Recieve an email when job completes (optional)"
-									  v-model="job.emailAddr"
+									  v-model="job.email"
 									  />
 					</v-flex>
 					<v-flex xs12 sm6>
@@ -51,8 +51,8 @@
 						<p>Select a partition from the list below</p>
 						<partition-list :partitions="available.partitions" 
 										:selected="job.partition"
-										 @selected-partition="setSelectedPartition"
-										 />
+										@selected-partition="setSelectedPartition"
+										/>
 
 					</v-flex>
 				</v-layout>
@@ -67,6 +67,7 @@
 					</v-flex>
 				 </v-layout>
 				 <!-- lewis general biocompute GPU   | get node usage of lewis -->
+
 				 <v-layout row wrap v-show="!job.advancedSettings">
 					<v-alert info value="true">
 						To run a multithreaded job on a single node, specify below the number of cores you want to allocate. Make sure that you set your program's parallel option to the same value.
@@ -77,6 +78,10 @@
 								type="number"
 								label="CPU / Cores"
 								hint="Number of cores to run on each node"
+								:rules="[ 
+									(val) => { return checkPartField(val, 'cpus') },
+									(val) => { return checkNotZero(val) },
+								]"
 								required
 								/>
 					</v-flex>
@@ -87,6 +92,10 @@
 								label="Memory / RAM"
 								suffix="GB"
 								hint="Memory (in Gigabytes) to accocate to your job"
+								:rules="[ 
+									(val) => { return checkPartField(val, 'memory') },
+									(val) => { return checkNotZero(val) },
+								]"
 								required
 								/>
 					</v-flex>
@@ -97,6 +106,8 @@
 											  label="Days"
 											  required
 											  v-model="job.runtime[0]"
+											  :error-messages="invalidTime"
+											  :error="!validTime"
 											  hint="Estimated Run Time"
 											  />
 							</v-flex>
@@ -105,6 +116,7 @@
 											  label="Hours"
 											  required
 											  v-model="job.runtime[1]"
+											  :error="!validTime"
 											  hint="Estimated Run Time"
 											  />
 							</v-flex>
@@ -113,6 +125,7 @@
 											  label="Minutes"
 											  required
 											  v-model="job.runtime[2]"
+											  :error="!validTime"
 											  hint="Estimated Run Time"
 											  />
 							</v-flex>
@@ -133,6 +146,7 @@
 								label="Nodes"
 								v-model="job.nodes"
 								hint="Number of nodes (machines) this job will run on"
+								:rules="[ (val) => { return checkNotZero(val) } ]"
 								required
 								/>
 						</div>
@@ -142,15 +156,17 @@
 								label="Tasks per Node"
 								v-model="job.tasks"
 								hint="The number of instance your command is executed"
+								:rules="[ (val) => { return checkNotZero(val) } ]"
 								required
 								/>
 						</div>
 						<div class="pa-2">
 							<v-text-field
 								type="number"
-								label="CPUs per Task"
-								v-model="job.tasksPerCpu"
-								hint="Number of CPUs for each Task"
+								label="CPUs per Node"
+								v-model="job.tasksPerNode"
+								hint="Number of Tasks to run on each Node"
+								:rules="[ (val) => { return checkNotZero(val) } ]"
 								required
 								/>
 						</div>
@@ -159,9 +175,13 @@
 						<div class="pa-2">
 							<v-text-field
 								type="number"
-								label="CPU / Cores"
+								label="CPU / Cores per Task"
 								v-model="job.cpus"
-								hint="Number of cores to run on each node"
+								hint="Number of cores to run in each Task"
+								:rules="[ 
+									(val) => { return checkPartField(val, 'cpus') },
+									(val) => { return checkNotZero(val) },
+								]"
 								required
 								/>
 						</div>
@@ -172,6 +192,10 @@
 								v-model="job.memory"
 								suffix="GB"
 								hint="Memory (in Gigabytes) to accocate to each CPU"
+								:rules="[ 
+									(val) => { return checkPartField(val, 'memory') },
+									(val) => { return checkNotZero(val) },
+								]"
 								required
 								/>
 						</div>
@@ -182,6 +206,8 @@
 												  label="Days"
 												  required
 												  v-model="job.runtime[0]"
+												  :error-messages="invalidTime"
+												  :error="!validTime"
 												  hint="Estimated Run Time"
 												  />
 								</v-flex>
@@ -190,6 +216,7 @@
 												  label="Hours"
 												  required
 												  v-model="job.runtime[1]"
+												  :error="!validTime"
 												  hint="Estimated Run Time"
 												  />
 								</v-flex>
@@ -198,6 +225,7 @@
 												  label="Minutes"
 												  required
 												  v-model="job.runtime[2]"
+												  :error="!validTime"
 												  hint="Estimated Run Time"
 												  />
 								</v-flex>
@@ -207,17 +235,16 @@
 				</v-layout>
 				<v-layout row wrap>
 					<v-flex xs12>
-						<v-select
-								label="Modules to Load"
-								hint="Select the modules (software dependancies) needed to run your job"
-								:items="available.modules"
-								v-model="job.modules"
-								autocomplete
-								multiple
-								chips
-								persistent-hint
-								clearable
-								/>
+						<v-select label="Modules to Load"
+								  hint="Select the modules (software dependancies) needed to run your job"
+								  :items="available.modules"
+								  v-model="job.modules"
+								  autocomplete
+								  multiple
+								  chips
+								  persistent-hint
+								  clearable
+								  />
 					</v-flex>
 					<v-flex xs12 md8>
 						<p>Enter commands to run. Existing scripts can be coppied or drag-and-dropped into the box below.</p>
@@ -238,7 +265,7 @@
 			<v-layout row wrap>
 				<v-flex>
 					<p class="text-xs-center">
-						<v-btn light :disabled="!validForm">Submit Job</v-btn>
+						<v-btn light :disabled="!validForm || submitting" @click="submitNew">Submit Job</v-btn>
 					</p>
 				</v-flex>
 			</v-layout>
@@ -248,6 +275,11 @@
 
 
 <script>
+
+// 
+// 
+// Slurm -- check reserved items.
+// 
 import { codemirror, CodeMirror } from 'vue-codemirror'
 import Partitions from '@/components/Partitions'
 require('codemirror/keymap/sublime.js')
@@ -299,13 +331,12 @@ export default {
 		job: {
 			account: '',
 			modules: [],
-			partition: '',
+			partition: 'General',
 			code: '',
-			email: false,
 			// mail-user
-			emailAddr: '',
+			email: '',
 			// mail-type
-			emailEvents: '',
+			emailEvents: [],
 			// job-name
 			name: '',
 			// cpus-per-task
@@ -318,8 +349,8 @@ export default {
 			nodes: 1,
 			// ntasks
 			tasks: 1,
-			// task-per-cpu
-			tasksPerCpu: 1,
+			// ntasks-per-node
+			tasksPerNode: 1,
 			// 
 			advancedSettings: false,
 		},
@@ -344,15 +375,21 @@ export default {
 			styleSelectedText: true,
 			highlightSelectionMatches: { showToken: /\w/, annotateScrollbar: true },
 			matchBrackets: true,
-		}
+		},
+
+		submitting: false,
 
 	}
   },
 
   computed: {
 
+  	invalidTime(){
+  		return (this.validTime) ? [] : [`Exceeds max time on ${this.partition.name}`]
+  	},
+
   	validTime(){
-  		return 0 < this.job.runtime.reduce((sum, value) => { return sum + value })
+  		return (0 < this.job.runtime.reduce((sum, value) => { return sum + value })) && this.checkTime()
   	},
 
   	validForm(){
@@ -367,9 +404,112 @@ export default {
   		return req_strings && req_ints && this.validTime
   	},
 
+  	partition(){
+		
+		let partition = Object.assign({}, this.available.partitions.find( part => { if(part.name === this.job.partition) return part }))
+
+		if(this.job.advancedSettings){
+			partition.memory = Math.floor(partition.memory / this.job.cpus)
+		} 
+
+		return (partition || { 
+								cpus: 20,
+								groups: "all",
+								memory: 100,
+								name: "default",
+								nodes: 10,
+								time_limit: "00"
+							})
+  	},
+
+  	partitionTime(){
+
+  		let [days, time, hours, minutes, seconds] = [ 0, 0, 0, 0, 0]
+
+  		if(this.partition !== undefined && this.partition.hasOwnProperty('time_limit')){
+
+	  		let findDays = this.partition.time_limit.split(/-/)
+
+	  		// D-HH:MM:SS
+	  		// D-HH
+	  		if(findDays.length > 1){
+		  		// set the days
+		  		days = findDays[0]
+		  		// the hours / minutes 
+		  		time = findDays[1]
+	  		} else {
+	  			days = 0
+	  			time = findDays[0]
+	  		}
+
+	  		let findTime = time.split(/\D+/g)
+	  		switch(findTime.length){
+	  			case 1:
+	  				// D-HH
+	  				if(findDays.length > 1){
+		  				hours = findTime[0]
+		  				minutes = 0
+	  					seconds = 0
+	  				} else {
+	  				// MM
+	  					hours = 0
+	  					minutes = findTime[0]
+	  					seconds = 0
+	  				}
+	  			break;
+	  			case 2: 
+	  				// D-HH:MM
+	  				if(findDays.length > 1){
+	  					hours = findTime[0]
+	  					minutes = findTime[1]
+	  					seconds = 0
+	  				} else {
+	  				// MM:SS
+	  					hours = 0
+	  					minutes = findTime[0]
+	  					seconds = findTime[1]
+	  				}
+	  			break;
+	  			case 3: 
+					hours = findTime[0]
+					minutes = findTime[1]
+					seconds = [2]
+				break;
+	  		}
+  		}
+
+  		return [days, hours, minutes, seconds]
+  	}
+
   },
 
   methods: {
+
+  	checkTime(){
+
+  		let part = [], 
+  			job = [], 
+  			toMinutes = [1440, 60, 1]
+
+  		toMinutes.forEach( (conversion, index) => {
+  			part[index] = this.partitionTime[index] * conversion
+  			job[index] = this.job.runtime[index] * conversion
+  		})
+
+  		part = part.reduce((a, b) => a + b, 0)
+	  	job = job.reduce((a, b) => a + b, 0)
+
+	  	return job <= part
+
+  	},
+
+  	checkNotZero(val){
+  		return (val > 0) || `A value greater than 0 is required`
+  	},
+
+  	checkPartField(val, field){
+  		return (val <= parseInt(this.partition[field])) || `A maximum of ${this.partition[field]} can be specified for ${this.partition.name}`
+  	},
 
 	setSelectedPartition(partition){
 		this.job.partition = partition
@@ -379,6 +519,22 @@ export default {
 		return parseInt((used / total) * 100)
 	},
 
+	submitNew(){
+		this.submitting = true
+
+		this.$http.post('api/jobs/new', this.job ).then( response => {
+			if(response.data.success){
+				this.$emit('submit-new-job')
+				// this.$router.push({ path: '/jobs' })
+			}
+		}).catch((error) => {
+			this.submitting = false
+		})
+	},
+
+	close(){
+		this.$emit('submit-new-job')
+	}
   }
 }
 </script>

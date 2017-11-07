@@ -5,8 +5,11 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "server:start": "node server.js --production",
-    "server:dev": "nodemon server.js"
+    "server:start": "NODE_ENV=production node server.js",
+    "server:dev": "NODE_ENV=development nodemon server.js"
+  },
+  "_moduleAliases": {
+    "@root": "."
   },
   "author": "Justin Le Tourneau",
   "license": "ISC",
@@ -14,7 +17,10 @@
     "cors": "^2.8.4",
     "express": "^4.16.2",
     "express-validator": "^4.2.1",
+    "module-alias": "^2.0.2",
     "mongodb": "^2.2.33",
-    "monk": "^6.0.5"
+    "monk": "^6.0.5",
+    "node-uuid": "^1.4.8",
+    "write": "^1.0.3"
   }
 }

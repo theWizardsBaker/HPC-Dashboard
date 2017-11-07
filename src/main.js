@@ -8,6 +8,7 @@ import Vuetify from 'vuetify'
 import VueCodeMirror from 'vue-codemirror'
 import axios from 'axios'
 import VueAxios from 'vue-axios'
+import 'vuetify/dist/vuetify.min.css'
 
 Vue.config.productionTip = false
 
@@ -17,12 +18,11 @@ Vue.use(Vuetify)
 Vue.use(VueAxios, axios.create({
     baseURL: API_BASE_URL,
     headers: { 
-	    'Accept': 'application/json',
-	    'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
     }
 }))
 
-import('vuetify/dist/vuetify.min.css')
 
 /* eslint-disable no-new */
 new Vue({

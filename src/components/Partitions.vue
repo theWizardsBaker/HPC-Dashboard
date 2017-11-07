@@ -65,17 +65,70 @@ export default {
   methods: {
 
   	formatTime(timestamp){
-  	  let time_post = ['Days', '', 'Hours', '', 'Minutes', '', 'Seconds']
-  	  // get the time split by delimiter 
-  	  let time = timestamp.split(/(\-|\:)/g).map( (time, ind) => {
-  	  	if(time > 0){
-  	  		return `${time} ${time_post[ind]}`
-  	  	} else {
-  	  		return ''
-  	  	}
-  	  })
-  	  // return our time string
-  	  return time.join(' ')
+
+  		let [days, time, hours, minutes, seconds] = [ 0, 0, 0, 0, 0]
+
+  		let findDays = timestamp.split(/-/)
+  		// D-HH:MM:SS
+  		// D-HH
+  		if(findDays.length > 1){
+	  		// set the days
+	  		days = findDays[0]
+	  		// the hours / minutes 
+	  		time = findDays[1]
+  		} else {
+  			days = 0
+  			time = findDays[0]
+  		}
+
+  		let findTime = time.split(/\D+/g)
+  		switch(findTime.length){
+  			case 1:
+  				// D-HH
+  				if(findDays.length > 1){
+	  				hours = findTime[0]
+	  				minutes = 0
+  					seconds = 0
+  				} else {
+  				// MM
+  					hours = 0
+  					minutes = findTime[0]
+  					seconds = 0
+  				}
+  			break;
+  			case 2: 
+  				// D-HH:MM
+  				if(findDays.length > 1){
+  					hours = findTime[0]
+  					minutes = findTime[1]
+  					seconds = 0
+  				} else {
+  				// MM:SS
+  					hours = 0
+  					minutes = findTime[0]
+  					seconds = findTime[1]
+  				}
+  			break;
+  			case 3: 
+				hours = findTime[0]
+				minutes = findTime[1]
+				seconds = findTime[2]
+			break;
+  		}
+
+		let timeLabel = ['Days', 'Hours', 'Minutes', 'Seconds']
+
+		// get the time split by delimiter 
+		let timeString = [days, hours, minutes, seconds].map( (time, ind) => {
+			if(time > 0){
+				return `${time} ${timeLabel[ind]}`
+			} else {
+				return ''
+			}
+		})
+
+		// return our time string
+		return timeString.join(' ')
   	},
 
   	setSelectedPartition(partition_name){

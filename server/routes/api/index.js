@@ -12,5 +12,6 @@ router.get('/', (req, res) => {
 router.use('/partitions', require('./partitions'));
 router.use('/modules', require('./modules'));
 router.use('/groups', require('./groups'));
+router.use('/jobs', require('./jobs'));
 
 module.exports = router;

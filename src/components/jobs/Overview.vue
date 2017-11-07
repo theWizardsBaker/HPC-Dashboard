@@ -14,7 +14,8 @@
 					  fullscreen 
 					  transition="dialog-bottom-transition" 
 					  :hide-overlay="true" 
-					  :overlay="false">
+					  :overlay="false"
+					  >
 				<v-card>
 					<v-toolbar>
 						<v-btn @click.native="closeJob()" icon dark>
@@ -30,7 +31,7 @@
 
 						</v-toolbar-title>
 					</v-toolbar>
-					<router-view></router-view>
+					<router-view @submit-new-job="closeJob()"></router-view>
 				</v-card>
 			</v-dialog>
 		</v-layout>
@@ -53,29 +54,30 @@
 				</v-layout>
 			</v-card-title>
 			<v-data-table	
-				:headers="data.headers"
-				:items="data.rows"
+				:headers="jobTable.headers"
+				:items="jobTable.rows"
 				:search="search"
 				class="elevation-1"
+				no-data-text="No Jobs to Display"
 				>
 				<template slot="items" scope="props">
 					<!-- <tr :active="props.selected" @click="props.selected = !props.selected"> -->
 					<tr>
 						<td class="text-xs-right">
 							<v-btn flat small primary class="job-link white--text" @click.stop="showJob(props.index)">
-								{{ props.item.job }}
+								{{ props.item.job || 'pending' }}
 							</v-btn>
 						</td>
 						<td class="text-xs-right">{{ props.item.name }}</td>
-						<td class="text-xs-right">{{ props.item.group }}</td>
+						<td class="text-xs-right">{{ props.item.account }}</td>
 						<td class="text-xs-right">{{ props.item.partition }}</td>
-						<td class="text-xs-right" :class="statusColor(props.item.state)">{{ props.item.state }}</td>
-						<td class="text-xs-right">{{ props.item.reason }}</td>
-						<td class="text-xs-right">{{ props.item.maxcpus }}</td>
-						<td class="text-xs-right">{{ props.item.maxram }}</td>
-						<td class="text-xs-right">{{ props.item.submitted }}</td>
-						<td class="text-xs-right">{{ props.item.start }}</td>
-						<td class="text-xs-right">{{ props.item.elapsed }}</td>
+						<td class="text-xs-right" :class="statusColor(props.item.status)">{{ props.item.status }}</td>
+						<td class="text-xs-right">{{ props.item.status_reason }}</td>
+						<td class="text-xs-right">{{ props.item.cpus }}</td>
+						<td class="text-xs-right">{{ props.item.memory }}</td>
+						<td class="text-xs-right">{{ formatDate(props.item.submitted) }}</td>
+						<td class="text-xs-right">{{ formatDate(props.item.start) }}</td>
+						<td class="text-xs-right">{{ formatDate(props.item.elapsed) }}</td>
 					</tr>
 				</template>
 			</v-data-table>
@@ -84,15 +86,12 @@
 </template>
 
 <script>
-	import JobDialog from '@/components/dialogs/Job'
+	
+	import Moment from 'moment'
 
 	export default {
 
 		name: 'jobs-overview',
-
-		components: {
-			jobDialog: JobDialog
-		},
 
 		updated() {
 			if(this.currentRoute === 'detailjob'){
@@ -101,6 +100,12 @@
 			if(this.currentRoute === 'newjob'){
 				this.newJob()
 			}
+		},
+
+		created(){
+			this.$http.get('api/jobs/all').then( response => {
+				this.jobTable.rows = response.data.jobs
+			})
 		},
 
 		data() {
@@ -112,78 +117,23 @@
 
 				selectedJob: 0,
 
-				data: {
+				jobTable: {
 
 					headers: [
-						{ text: 'Job Id', value: 'job' },
+						{ text: 'Job Id', value: '_id' },
 						{ text: 'Name', value: 'name' },
-						{ text: 'Group', value: 'group' },
+						{ text: 'Account', value: 'account' },
 						{ text: 'HPC Partition', value: 'partition' },
-						{ text: 'Completed Status', value: 'state' },
-						{ text: 'Status Reason', value: 'reason' },
-						{ text: 'Max CPU', value: 'maxcpus' },
-						{ text: 'Max Ram', value: 'maxram' },
+						{ text: 'Completed Status', value: 'status' },
+						{ text: 'Status Reason', value: 'status_reason' },
+						{ text: 'Max CPU', value: 'cpu' },
+						{ text: 'Max Ram', value: 'memory' },
 						{ text: 'Submited', value: 'submitted' },
 						{ text: 'Started', value: 'start' },
 						{ text: 'Run Time', value: 'elapsed' },
 					],
 
-					rows: [
-
-						{
-							job: '3002530',
-							name: 'Job 1',
-							group: 'elsiklab',
-							partition: 'Lewis',
-							state: 'PENDING',
-							maxcpus: '10',
-							maxram: '20G',
-							reason: 'PartitionTimeLimit',
-							submitted: 'August 15 2017 3:17pm',
-							start: 'Unknown',
-							elapsed: 'Unknown',
-						},
-						{
-							job: '3023438',
-							name: 'Job 2',
-							group: 'spencer',
-							partition: 'BioCompute',
-							state: 'COMPLETED',
-							maxcpus: '30',
-							maxram: '28G',
-							reason: '',
-							submitted: 'July 2 2017 4:00pm',
-							start: 'Unknown',
-							elapsed: 'Unknown',
-						},
-						{
-							job: '3112538',
-							name: 'Job 3',
-							group: 'general',
-							partition: 'General',
-							state: 'CANCELLED',
-							maxcpus: '2',
-							maxram: '200G',
-							reason: 'PartitionTimeLimit',
-							submitted: 'Sep 9 2017 2:12pm',
-							start: 'Unknown',
-							elapsed: 'Unknown',
-						},
-						{
-							job: '3002538',
-							name: 'Job 5',
-							group: 'elsiklab',
-							partition: 'General',
-							state: 'FAILED',
-							maxcpus: '10',
-							maxram: '8G',
-							reason: 'PartitionTimeLimit',
-							submitted: 'Sep 9 2017 10:30am',
-							start: 'Unknown',
-							elapsed: 'Unknown',
-						},
-
-					]
+					rows: []
 				}
 			}
 		},
@@ -225,6 +175,12 @@
 			closeJob(){
 				this.showJobDialog = false
 				this.$router.push({ name: 'jobs' })
+			},
+
+			formatDate(date){
+				if(date){
+					return Moment(new Date(date)).format('MM-DD-YYYY')
+				}
 			}
 		}
 	}
