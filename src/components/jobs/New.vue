@@ -108,6 +108,7 @@
 											  v-model="job.runtime[0]"
 											  :error-messages="invalidTime"
 											  :error="!validTime"
+											  min="0"
 											  hint="Estimated Run Time"
 											  />
 							</v-flex>
@@ -118,6 +119,7 @@
 											  v-model="job.runtime[1]"
 											  :error="!validTime"
 											  hint="Estimated Run Time"
+											  min="0"
 											  />
 							</v-flex>
 							<v-flex xs4 md3>
@@ -127,6 +129,7 @@
 											  v-model="job.runtime[2]"
 											  :error="!validTime"
 											  hint="Estimated Run Time"
+											  min="0"
 											  />
 							</v-flex>
 						</v-layout>
@@ -424,7 +427,7 @@ export default {
 
   	partitionTime(){
 
-  		let [days, time, hours, minutes, seconds] = [ 0, 0, 0, 0, 0]
+  		let [days, time, hours, minutes, seconds] = [ 0, 0, 0, 0, 0 ]
 
   		if(this.partition !== undefined && this.partition.hasOwnProperty('time_limit')){
 

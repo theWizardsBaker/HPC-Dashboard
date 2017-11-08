@@ -19,7 +19,7 @@ router.get('/all', (req, res) => {
 // get a subset 
 router.get('/find/:id', (req, res) => {
 	// make sure the name param is provided
-	req.checkParams('id', 'Please provide a job number').isNumeric().notEmpty();
+	req.checkParams('id', 'Please provide a job number').notEmpty();
 	req.sanitizeParams('id').escape();
 	// check the validation result
 	req.getValidationResult().then((result) => {
@@ -31,9 +31,9 @@ router.get('/find/:id', (req, res) => {
 		// find all the jobs from the DB
 		let jobs = req.db.get('jobs');
 		// get jobs
-		jobs.find({ job_id: req.params.job_id }).then( (docs) => {
+		jobs.findOne({ _id: req.params.id }).then( (doc) => {
 			// return them to the user
-			res.json({ jobs: docs, success: true });
+			res.json({ job: doc, success: true });
 	    })
 	})
 });
@@ -91,7 +91,7 @@ router.post('/new', (req, res) => {
 		// get jobs
 		jobs.insert({ 
 			job_id: null,
-			output_file: uuid.v4(),
+			output_file: req.body.name.replace(/ /g, '_') + '_' + uuid.v4(),
 			status: 'pending',
 			status_reason: 'preparing to submit',
 			user_id: 'letourneaujj',
@@ -153,7 +153,7 @@ ${docs.code}
 			`
 
 
-			fs.writeFile(`${docs.name}_${docs._id}.s`, file, (error) => {
+			fs.writeFile(`/tmp/${docs.name}_${docs._id}.s`, file, (error) => {
 				if(error){
 					res.status(400).json({ errors: error, success: false });
 					return;

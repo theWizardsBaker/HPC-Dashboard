@@ -26,12 +26,11 @@
 								New Job
 							</span>
 							<span v-else>
-								Job {{selectedJob}} Info
+								Job Info
 							</span>
-
 						</v-toolbar-title>
 					</v-toolbar>
-					<router-view @submit-new-job="closeJob()"></router-view>
+					<router-view @submit-new-job="closeJob()" :job="selectedJob"></router-view>
 				</v-card>
 			</v-dialog>
 		</v-layout>
@@ -53,13 +52,12 @@
 					</v-flex>
 				</v-layout>
 			</v-card-title>
-			<v-data-table	
-				:headers="jobTable.headers"
-				:items="jobTable.rows"
-				:search="search"
-				class="elevation-1"
-				no-data-text="No Jobs to Display"
-				>
+			<v-data-table :headers="jobTable.headers"
+						  :items="jobTable.rows"
+						  :search="search"
+						  class="elevation-1"
+						  no-data-text="No Jobs to Display"
+						  >
 				<template slot="items" scope="props">
 					<!-- <tr :active="props.selected" @click="props.selected = !props.selected"> -->
 					<tr>
@@ -73,8 +71,6 @@
 						<td class="text-xs-right">{{ props.item.partition }}</td>
 						<td class="text-xs-right" :class="statusColor(props.item.status)">{{ props.item.status }}</td>
 						<td class="text-xs-right">{{ props.item.status_reason }}</td>
-						<td class="text-xs-right">{{ props.item.cpus }}</td>
-						<td class="text-xs-right">{{ props.item.memory }}</td>
 						<td class="text-xs-right">{{ formatDate(props.item.submitted) }}</td>
 						<td class="text-xs-right">{{ formatDate(props.item.start) }}</td>
 						<td class="text-xs-right">{{ formatDate(props.item.elapsed) }}</td>
@@ -93,18 +89,17 @@
 
 		name: 'jobs-overview',
 
-		updated() {
-			if(this.currentRoute === 'detailjob'){
-				this.showJob(this.$route.params.id)
-			}
-			if(this.currentRoute === 'newjob'){
-				this.newJob()
-			}
-		},
-
 		created(){
 			this.$http.get('api/jobs/all').then( response => {
 				this.jobTable.rows = response.data.jobs
+				if(this.currentRoute === 'detailjob'){
+					// this.showJob(this.$route.params.id)
+					this.selectedJob = this.jobTable.rows.filter( row => { if(row._id === this.$route.params.id) return row })[0]
+					this.showJobDialog = true
+				} else if(this.currentRoute === 'newjob'){
+					// this.newJob()
+					this.showJobDialog = true
+				}
 			})
 		},
 
@@ -115,7 +110,7 @@
 
 				showJobDialog: false,
 
-				selectedJob: 0,
+				selectedJob: null,
 
 				jobTable: {
 
@@ -126,8 +121,6 @@
 						{ text: 'HPC Partition', value: 'partition' },
 						{ text: 'Completed Status', value: 'status' },
 						{ text: 'Status Reason', value: 'status_reason' },
-						{ text: 'Max CPU', value: 'cpu' },
-						{ text: 'Max Ram', value: 'memory' },
 						{ text: 'Submited', value: 'submitted' },
 						{ text: 'Started', value: 'start' },
 						{ text: 'Run Time', value: 'elapsed' },
@@ -146,7 +139,18 @@
 
 		},
 
+		watch: {
+			'$route' : 'routeChange'
+		},
+
 		methods: {
+
+			routeChange(){
+				this.$http.get('api/jobs/all').then( response => {
+					this.jobTable.rows = response.data.jobs
+				})
+			},
+
 			statusColor(status){
 				switch(status.toLocaleLowerCase()){
 					case "completed": 
@@ -166,10 +170,10 @@
 			},
 
 
-			showJob(job){
+			showJob(index){
 				this.showJobDialog = true
-				this.selectedJob = job
-				this.$router.push({ name: 'detailjob', params: { id: job } })
+				this.selectedJob = this.jobTable.rows[index]
+				this.$router.push({ name: 'detailjob', params: { id: this.selectedJob._id } })
 			},
 
 			closeJob(){
